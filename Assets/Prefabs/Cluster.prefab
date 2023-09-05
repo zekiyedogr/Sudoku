@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 7466933095600477649}
   m_Layer: 5
   m_Name: Cluster
-  m_TagString: Untagged
+  m_TagString: Cluster
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
