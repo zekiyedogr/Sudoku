@@ -113,8 +113,6 @@ public class PlayControl : MonoBehaviour
 
         foreach (var item in chooseNumbers)
         {
-            Debug.Log(item.name);
-
             Image image = item.GetComponent<Image>();
 
             if (image != null)
