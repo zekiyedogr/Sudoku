@@ -17,21 +17,23 @@ public class PlayControl : MonoBehaviour
     bool wrongChoose, finish;
 
     GameObject numberObject;
-    Image imageComponent;
 
     public List<Vector2Int> blockStep;
 
-    [SerializeField] GameObject startPanel, finishPanel;
+    [SerializeField] GameObject startPanel, finishPanel, pausePanel;
     LevelType levelType;
 
     public TMP_Text timeText, finishPLevelTypeText, finishPTimeText, finishPBestTime;
     private float timeValue;
+
+    bool GameIsPaused;
 
     private void Awake()
     {
         tableController = FindObjectOfType<TableController>();
         startPanel.SetActive(true);
         finishPanel.SetActive(false);
+        pausePanel.SetActive(false);
     }
 
     private void Start()
@@ -41,7 +43,7 @@ public class PlayControl : MonoBehaviour
 
     private void Update()
     {
-        if (finish)
+        if (finish || GameIsPaused)
             return;
 
         timeValue += Time.deltaTime;
@@ -72,103 +74,55 @@ public class PlayControl : MonoBehaviour
 
     public void ChooseNumber(int number)
     {
-        if(numberObject != null)
+        if (GameIsPaused)
+            return;
+
+        if (numberObject != null)
         {
-            imageComponent = numberObject.GetComponent<Image>();
-
-            if (imageComponent != null)
-            {
-                Color currentColor = imageComponent.color;
-                currentColor.a = 1f;
-                imageComponent.color = currentColor;
-            }
-
-            GameObject[] chooseNumbers_ = GameObject.FindGameObjectsWithTag("Block" + chooseNumber.ToString());
-            foreach (var item in chooseNumbers_)
-            {
-                Image image = item.GetComponent<Image>();
-
-                if (image != null)
-                {
-                    Color currentColor = image.color;
-                    currentColor.a = 1f;
-                    image.color = currentColor;
-                }
-            }
+            ChangeNumbersAlpha(numberObject, 1f);
         }
 
         chooseNumber = number;
         numberObject = EventSystem.current.currentSelectedGameObject;
 
-        imageComponent = numberObject.GetComponent<Image>();
-
-        if (imageComponent != null)
-        {
-            Color currentColor = imageComponent.color;
-            currentColor.a = 0.5f;
-            imageComponent.color = currentColor;
-        }
-
-        GameObject[] chooseNumbers = GameObject.FindGameObjectsWithTag("Block" + chooseNumber.ToString());
-
-        foreach (var item in chooseNumbers)
-        {
-            Image image = item.GetComponent<Image>();
-
-            if (image != null)
-            {
-                Color currentColor = image.color;
-                currentColor.a = 0.5f;
-                image.color = currentColor;
-            }
-        }
+        ChangeNumbersAlpha(numberObject, 0.5f);
     }
 
     public void FillBlock(int blockValue, Vector2Int blockLoc)
     {
-        if (wrongChoose)
+        if (wrongChoose || chooseNumber == 0 || GameIsPaused)
             return;
 
-        if (chooseNumber != 0)
+        GameObject currentBlock = tableController.allBlock[blockLoc.x, blockLoc.y];
+
+        if (tableController.openedBlock.Contains(currentBlock))
+            return;
+
+        blockStep.Add(blockLoc);
+
+        if (blockValue == chooseNumber)
         {
-            GameObject currentBlock = tableController.allBlock[blockLoc.x, blockLoc.y];
+            currentBlock.tag = "Block" + currentBlock.GetComponent<Block>().blockValue.ToString();
+            currentBlock.GetComponent<Button>().interactable = false;
 
-            if (tableController.openedBlock.Contains(currentBlock))
-                return;
+            Transform blockText = currentBlock.transform.Find("Block Text");
+            blockText.GetComponent<TextMeshProUGUI>().text = blockValue.ToString();
 
-            blockStep.Add(blockLoc);
+            tableController.openedBlock.Add(currentBlock);
 
-            if (blockValue == chooseNumber)
-            {
-                currentBlock.tag = "Block" + currentBlock.GetComponent<Block>().blockValue.ToString();
-                currentBlock.GetComponent<Button>().interactable = false;
-
-                Transform blockText = currentBlock.transform.Find("Block Text");
-                blockText.GetComponent<TextMeshProUGUI>().text = blockValue.ToString();
-
-                tableController.openedBlock.Add(currentBlock);
-
-
-                Image image = currentBlock.GetComponent<Image>();
-
-                if (image != null)
-                {
-                    Color currentColor = image.color;
-                    currentColor.a = 0.5f;
-                    image.color = currentColor;
-                }
-            }
-            else
-            {
-                Image imageComponent = currentBlock.GetComponent<Image>();
-                currentColorBlock = imageComponent.color;
-                imageComponent.color = wrongValue;
-
-                Transform blockText = currentBlock.transform.Find("Block Text");
-                blockText.GetComponent<TextMeshProUGUI>().text = chooseNumber.ToString();
-                wrongChoose = true;
-            }
+            ChangeImageAlpha(currentBlock, 0.5f);
         }
+        else
+        {
+            Image imageComponent = currentBlock.GetComponent<Image>();
+            currentColorBlock = imageComponent.color;
+            imageComponent.color = wrongValue;
+
+            Transform blockText = currentBlock.transform.Find("Block Text");
+            blockText.GetComponent<TextMeshProUGUI>().text = chooseNumber.ToString();
+            wrongChoose = true;
+            }
+        
 
         if (tableController.openedBlock.Count == 81)
         {
@@ -185,16 +139,19 @@ public class PlayControl : MonoBehaviour
             finishPBestTime.text = PlayerPrefs.GetString("timeText");
         }
 
-        GameObject[] chooseNumbers = GameObject.FindGameObjectsWithTag("Block" + chooseNumber.ToString());
-        if(chooseNumbers.Length == 9)
+        GameObject[] blocks = GameObject.FindGameObjectsWithTag("Block" + chooseNumber.ToString());
+
+        if (blocks.Length == 9)
         {
             numberObject.GetComponent<Button>().interactable = false;
+
+            ChangeImageAlpha(numberObject, 1f);
         }
     }
 
     public void TakeItBack()
     {
-        if (blockStep.Count == 0)
+        if (blockStep.Count == 0 || GameIsPaused)
             return;
 
         GameObject currentBlock = tableController.allBlock[blockStep[blockStep.Count - 1].x, blockStep[blockStep.Count - 1].y];
@@ -207,7 +164,6 @@ public class PlayControl : MonoBehaviour
             imageComponent.color = currentColorBlock;
         }
 
-
         if (imageComponent.color.a == 0.5f)
         {
             Color currentColor = imageComponent.color;
@@ -218,6 +174,14 @@ public class PlayControl : MonoBehaviour
         Transform blockText = currentBlock.transform.Find("Block Text");
         blockText.GetComponent<TextMeshProUGUI>().text = "";
 
+        currentBlock.tag = "Untagged";
+
+        int currentBlockValue = currentBlock.GetComponent<Block>().blockValue;
+
+        GameObject chooseNumber = GameObject.FindGameObjectWithTag("Number" + currentBlockValue.ToString());
+        chooseNumber.GetComponent<Button>().interactable = true;
+        currentBlock.GetComponent<Button>().interactable = true;
+
         blockStep.RemoveAt(blockStep.Count - 1);
 
         tableController.openedBlock.Remove(currentBlock);
@@ -227,6 +191,45 @@ public class PlayControl : MonoBehaviour
     {
         int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(currentSceneIndex);
+    }
+
+    public void Pause()
+    {
+        if (GameIsPaused)
+        {
+            pausePanel.SetActive(false);
+            Time.timeScale = 1f;
+            GameIsPaused = false;
+        }
+        else
+        {
+            pausePanel.SetActive(true);
+            Time.timeScale = 0f;
+            GameIsPaused = true;
+        }
+    }
+
+    private void ChangeImageAlpha(GameObject validObject, float imageValue)
+    {
+        Image imageComponent = validObject.GetComponent<Image>();
+
+        if (imageComponent != null)
+        {
+            Color currentColor = imageComponent.color;
+            currentColor.a = imageValue;
+            imageComponent.color = currentColor;
+        }
+    }
+
+    private void ChangeNumbersAlpha(GameObject validObject, float imageValue)
+    {
+        ChangeImageAlpha(validObject, imageValue);
+
+        GameObject[] chooseNumbers = GameObject.FindGameObjectsWithTag("Block" + chooseNumber.ToString());
+        foreach (var item in chooseNumbers)
+        {
+            ChangeImageAlpha(item, imageValue);
+        }
     }
 }
  
