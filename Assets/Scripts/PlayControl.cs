@@ -147,6 +147,16 @@ public class PlayControl : MonoBehaviour
                 blockText.GetComponent<TextMeshProUGUI>().text = blockValue.ToString();
 
                 tableController.openedBlock.Add(currentBlock);
+
+
+                Image image = currentBlock.GetComponent<Image>();
+
+                if (image != null)
+                {
+                    Color currentColor = image.color;
+                    currentColor.a = 0.5f;
+                    image.color = currentColor;
+                }
             }
             else
             {
@@ -162,7 +172,7 @@ public class PlayControl : MonoBehaviour
 
         if (tableController.openedBlock.Count == 81)
         {
-            if(PlayerPrefs.GetFloat("time") < timeValue)
+            if(PlayerPrefs.GetFloat("time") > timeValue || PlayerPrefs.GetFloat("time") == 0)
             {
                 PlayerPrefs.SetFloat("time", timeValue);
                 PlayerPrefs.SetString("timeText", timeText.text);
@@ -192,9 +202,18 @@ public class PlayControl : MonoBehaviour
         Image imageComponent = currentBlock.GetComponent<Image>();
 
         if (imageComponent.color == wrongValue)
+        {
             wrongChoose = false;
+            imageComponent.color = currentColorBlock;
+        }
 
-        imageComponent.color = currentColorBlock;
+
+        if (imageComponent.color.a == 0.5f)
+        {
+            Color currentColor = imageComponent.color;
+            currentColor.a = 1f;
+            imageComponent.color = currentColor;
+        }
 
         Transform blockText = currentBlock.transform.Find("Block Text");
         blockText.GetComponent<TextMeshProUGUI>().text = "";
