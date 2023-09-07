@@ -3,7 +3,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-public enum LevelType { easy, middle, difficult, expert }
+public enum LevelType { easy, medium, hard, expert }
 
 public class TableController : MonoBehaviour
 {
@@ -253,9 +253,9 @@ public class TableController : MonoBehaviour
     {
         if (levelType == LevelType.easy)
             visibleBlock = Random.Range(50, 60);
-        else if (levelType == LevelType.middle)
+        else if (levelType == LevelType.medium)
             visibleBlock = Random.Range(45, 50);
-        else if (levelType == LevelType.difficult)
+        else if (levelType == LevelType.hard)
             visibleBlock = Random.Range(40, 45);
         else if (levelType == LevelType.expert)
             visibleBlock = Random.Range(35, 40);

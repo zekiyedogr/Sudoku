@@ -60,9 +60,9 @@ public class PlayControl : MonoBehaviour
         if (i == 0)
             levelType = LevelType.easy;
         else if (i == 1)
-            levelType = LevelType.middle;
+            levelType = LevelType.medium;
         else if (i == 2)
-            levelType = LevelType.difficult;
+            levelType = LevelType.hard;
         else if (i == 3)
             levelType = LevelType.expert;
 
