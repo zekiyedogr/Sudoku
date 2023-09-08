@@ -57,14 +57,8 @@ public class PlayControl : MonoBehaviour
     {
         Time.timeScale = 1f;
 
-        if (i == 0)
-            levelType = LevelType.easy;
-        else if (i == 1)
-            levelType = LevelType.medium;
-        else if (i == 2)
-            levelType = LevelType.hard;
-        else if (i == 3)
-            levelType = LevelType.expert;
+        levelType = (LevelType)i;
+        Debug.Log(levelType);
 
         startPanel.SetActive(false);
 
